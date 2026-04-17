@@ -1,17 +1,24 @@
 import React from "react"
-import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Sidebar } from '@/components/sidebar'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
-  title: 'Castaña - Gestión de Nuez de Brasil',
-  description: 'Sistema empresarial de gestión de compra, venta e inventario de Nuez de Brasil',
+  title: 'AgroStock - Gestión de Inventario Agrícola',
+  description: 'Sistema profesional de gestión de insumos y herramientas agrícolas',
   generator: 'v0.app',
+}
+
+export const viewport: Viewport = {
+  themeColor: '#1A5C3A',
 }
 
 export default function RootLayout({
@@ -20,10 +27,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es">
-      <body className="font-sans antialiased bg-background">
+    <html lang="es" className="bg-background">
+      <body className={`${inter.className} antialiased bg-background`}>
         <Sidebar />
-        <main className="ml-64">
+        <main className="ml-60">
           {children}
         </main>
         <Analytics />

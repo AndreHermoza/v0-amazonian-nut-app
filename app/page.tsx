@@ -1,10 +1,9 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import {
   BarChart,
   Bar,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -16,245 +15,399 @@ import {
   Cell,
 } from 'recharts';
 import {
-  DollarSign,
   Package,
+  Archive,
+  AlertTriangle,
+  DollarSign,
   TrendingUp,
-  AlertCircle,
-  Calendar,
+  TrendingDown,
   ArrowUpRight,
   ArrowDownLeft,
 } from 'lucide-react';
-import Link from 'next/link';
+import {
+  products,
+  movements,
+  monthlyConsumption,
+  stockDistribution,
+  formatCurrency,
+  calculateTotalInventoryValue,
+  getTotalStock,
+  getAlertCounts,
+  getCategoryColor,
+} from '@/lib/data';
 
-const incomeExpenseData = [
-  { month: 'Enero', ingresos: 45000, egresos: 28000 },
-  { month: 'Febrero', ingresos: 52000, egresos: 31000 },
-  { month: 'Marzo', ingresos: 48000, egresos: 29500 },
-  { month: 'Abril', ingresos: 61000, egresos: 35000 },
-  { month: 'Mayo', ingresos: 55000, egresos: 32000 },
-  { month: 'Junio', ingresos: 67000, egresos: 38000 },
-];
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
 
-const inventarioData = [
-  { name: 'En Stock', value: 650, fill: '#2D7F6E' },
-  { name: 'Stock Bajo', value: 150, fill: '#F5A623' },
-  { name: 'Agotado', value: 50, fill: '#DC2626' },
-];
-
-const recentTransactions = [
-  { id: 1, type: 'COMPRA', origin: 'Comunidad Achual', amount: 8500, date: '27 Jun 2025', status: 'Completado', latas: 850 },
-  { id: 2, type: 'VENTA', origin: 'Exportadora Lima', amount: 12300, date: '25 Jun 2025', status: 'Completado', latas: 1230 },
-  { id: 3, type: 'COMPRA', origin: 'Aldea Aguaruna', amount: 6200, date: '23 Jun 2025', status: 'Pendiente', latas: 620 },
-  { id: 4, type: 'VENTA', origin: 'Distribuidora Iquitos', amount: 15800, date: '20 Jun 2025', status: 'Completado', latas: 1580 },
-];
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 100,
+    },
+  },
+};
 
 export default function Dashboard() {
-  const totalCapital = 45230;
-  const inventoryTotal = 850;
-  const transactionCount = 12;
-  const pendingLoans = 24500;
+  const totalProducts = products.length;
+  const totalStock = getTotalStock();
+  const alertCounts = getAlertCounts();
+  const totalAlerts = alertCounts.critical + alertCounts.warning;
+  const inventoryValue = calculateTotalInventoryValue();
+
+  const kpiCards = [
+    {
+      title: 'Total Productos',
+      value: totalProducts.toString(),
+      subtitle: 'en catálogo',
+      icon: Package,
+      trend: '+2',
+      trendUp: true,
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-700',
+    },
+    {
+      title: 'Stock Total',
+      value: totalStock.toLocaleString(),
+      subtitle: 'unidades',
+      icon: Archive,
+      trend: '+150',
+      trendUp: true,
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-700',
+    },
+    {
+      title: 'Alertas Activas',
+      value: totalAlerts.toString(),
+      subtitle: `${alertCounts.critical} críticas`,
+      icon: AlertTriangle,
+      trend: alertCounts.critical > 0 ? 'Atención' : 'OK',
+      trendUp: false,
+      iconBg: totalAlerts > 0 ? 'bg-red-100' : 'bg-green-100',
+      iconColor: totalAlerts > 0 ? 'text-red-700' : 'text-green-700',
+      highlight: totalAlerts > 0,
+    },
+    {
+      title: 'Valor Inventario',
+      value: formatCurrency(inventoryValue),
+      subtitle: 'total',
+      icon: DollarSign,
+      trend: '+8.5%',
+      trendUp: true,
+      iconBg: 'bg-emerald-100',
+      iconColor: 'text-emerald-700',
+    },
+  ];
 
   return (
-    <div className="w-full bg-background">
-      <main className="w-full">
-        {/* Header */}
-        <header className="border-b border-border bg-card">
-          <div className="px-6 py-6 md:px-8">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-foreground">Sistema de Gestión de Nuez de Brasil</h1>
-                <p className="text-foreground/60 mt-2 leading-relaxed">Bienvenido al panel de control. Monitorea tus operaciones y finanzas en tiempo real.</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-sm text-foreground/60 whitespace-nowrap">
-                  <Calendar className="w-5 h-5" />
-                  <span>{new Date().toLocaleDateString('es-PE', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                </div>
-                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
-                  <span className="text-sm font-bold text-primary">P</span>
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-semibold text-foreground">Paul</p>
-                  <p className="text-xs text-foreground/60">Administrador</p>
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border bg-card px-6 py-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Resumen general del inventario agrícola
+            </p>
           </div>
-        </header>
-
-        {/* Content */}
-        <div className="p-5 md:p-6 bg-background">
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-            {/* Capital Disponible */}
-            <div className="bg-card rounded-xl p-5 border border-border shadow-soft hover:shadow-md transition-all duration-300">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-foreground/60 font-semibold uppercase tracking-wide">Capital</p>
-                  <p className="text-3xl font-black text-primary mt-2">S/. {totalCapital.toLocaleString()}</p>
-                </div>
-                <div className="bg-emerald-100 p-3 rounded-lg flex-shrink-0">
-                  <DollarSign className="w-6 h-6 text-emerald-700" />
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-emerald-600 font-semibold mt-3">
-                <TrendingUp className="w-3 h-3" />
-                <span>+12.5%</span>
-              </div>
-            </div>
-
-            {/* Inventario Total */}
-            <div className="bg-card rounded-xl p-5 border border-border shadow-soft hover:shadow-md transition-all duration-300">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-foreground/60 font-semibold uppercase tracking-wide">Inventario</p>
-                  <p className="text-3xl font-black text-primary mt-2">{inventoryTotal}</p>
-                  <p className="text-xs text-foreground/50 mt-1">latas</p>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-lg flex-shrink-0">
-                  <Package className="w-6 h-6 text-blue-700" />
-                </div>
-              </div>
-            </div>
-
-            {/* Transacciones */}
-            <div className="bg-card rounded-xl p-5 border border-border shadow-soft hover:shadow-md transition-all duration-300">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-foreground/60 font-semibold uppercase tracking-wide">Transacciones</p>
-                  <p className="text-3xl font-black text-secondary mt-2">{transactionCount}</p>
-                </div>
-                <div className="bg-amber-100 p-3 rounded-lg flex-shrink-0">
-                  <TrendingUp className="w-6 h-6 text-amber-700" />
-                </div>
-              </div>
-            </div>
-
-            {/* Préstamos Pendientes */}
-            <div className="bg-card rounded-xl p-5 border border-border shadow-soft hover:shadow-md transition-all duration-300" style={{ borderLeft: '4px solid #DC2626' }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-foreground/60 font-semibold uppercase tracking-wide">Préstamos</p>
-                  <p className="text-3xl font-black text-foreground mt-2">S/. {(pendingLoans/1000).toFixed(0)}K</p>
-                </div>
-                <div className="bg-red-100 p-3 rounded-lg flex-shrink-0">
-                  <AlertCircle className="w-6 h-6 text-red-700" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Charts Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-6">
-            {/* Income vs Expense Chart */}
-            <div className="lg:col-span-2 bg-card rounded-xl p-5 border border-border shadow-soft">
-              <h2 className="text-sm font-bold text-foreground mb-4">Ingresos vs Egresos (6 Meses)</h2>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={incomeExpenseData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="month" stroke="var(--foreground)" style={{ fontSize: '12px' }} />
-                  <YAxis stroke="var(--foreground)" style={{ fontSize: '12px' }} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--card)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '12px'
-                    }}
-                    formatter={(value) => `S/. ${value.toLocaleString()}`}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '12px' }} />
-                  <Bar dataKey="ingresos" fill="#2D7F6E" name="Ingresos" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="egresos" fill="#D97363" name="Egresos" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Inventory Status */}
-            <div className="bg-card rounded-xl p-5 border border-border shadow-soft flex flex-col">
-              <h2 className="text-sm font-bold text-foreground mb-4">Estado de Inventario</h2>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={inventarioData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    dataKey="value"
-                    paddingAngle={2}
-                  >
-                    {inventarioData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => `${value} latas`} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="mt-3 space-y-1">
-                {inventarioData.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.fill }} />
-                      <span className="text-foreground/70">{item.name}</span>
-                    </div>
-                    <span className="font-semibold text-foreground">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-        {/* Recent Transactions */}
-        <div className="bg-card rounded-xl p-5 border border-border shadow-soft">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-foreground">Transacciones Recientes</h2>
-              <Link href="/transacciones" className="text-primary hover:text-primary/70 text-sm font-medium transition-colors">Ver todas →</Link>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 font-semibold text-foreground/70">Tipo</th>
-                    <th className="text-left py-3 px-4 font-semibold text-foreground/70">Origen/Destino</th>
-                    <th className="text-left py-3 px-4 font-semibold text-foreground/70">Cantidad</th>
-                    <th className="text-right py-3 px-4 font-semibold text-foreground/70">Monto</th>
-                    <th className="text-left py-3 px-4 font-semibold text-foreground/70">Fecha</th>
-                    <th className="text-left py-3 px-4 font-semibold text-foreground/70">Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentTransactions.map((tx) => (
-                    <tr key={tx.id} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                          tx.type === 'COMPRA' 
-                            ? 'bg-blue-50 text-blue-700' 
-                            : 'bg-green-50 text-green-700'
-                        }`}>
-                          {tx.type === 'COMPRA' ? 'COMPRA' : 'VENTA'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-foreground">{tx.origin}</td>
-                      <td className="py-3 px-4 text-foreground">{tx.latas} latas</td>
-                      <td className="py-3 px-4 text-right font-semibold text-foreground">S/. {tx.amount.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-foreground/60 text-xs">{tx.date}</td>
-                      <td className="py-3 px-4">
-                        <span className={`text-xs font-medium px-2 py-1 rounded ${
-                          tx.status === 'Completado'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {tx.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+            Generar Reporte
+          </button>
         </div>
-      </main>
+      </header>
+
+      {/* Content */}
+      <motion.div
+        className="p-6"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {kpiCards.map((card, index) => {
+            const Icon = card.icon;
+            return (
+              <motion.div
+                key={card.title}
+                variants={itemVariants}
+                className={`bg-card rounded-xl p-5 border border-border shadow-card hover:shadow-soft transition-all duration-300 ${
+                  card.highlight ? 'ring-2 ring-red-200' : ''
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                      {card.title}
+                    </p>
+                    <p className="text-2xl font-bold text-foreground mt-2">
+                      {card.value}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {card.subtitle}
+                    </p>
+                  </div>
+                  <div className={`${card.iconBg} p-3 rounded-lg`}>
+                    <Icon className={`w-5 h-5 ${card.iconColor}`} />
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 mt-3">
+                  {card.trendUp ? (
+                    <TrendingUp className="w-3 h-3 text-green-600" />
+                  ) : (
+                    <TrendingDown className="w-3 h-3 text-red-600" />
+                  )}
+                  <span
+                    className={`text-xs font-medium ${
+                      card.trendUp ? 'text-green-600' : 'text-red-600'
+                    }`}
+                  >
+                    {card.trend}
+                  </span>
+                  <span className="text-xs text-muted-foreground ml-1">
+                    este mes
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          {/* Bar Chart - Monthly Consumption */}
+          <motion.div
+            variants={itemVariants}
+            className="lg:col-span-2 bg-card rounded-xl p-5 border border-border shadow-card"
+          >
+            <h2 className="text-sm font-semibold text-foreground mb-4">
+              Consumo Mensual por Categoría
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart
+                data={monthlyConsumption}
+                margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E4E8E2" />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
+                  axisLine={{ stroke: '#E4E8E2' }}
+                />
+                <YAxis
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
+                  axisLine={{ stroke: '#E4E8E2' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #E4E8E2',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar
+                  dataKey="Semillas"
+                  fill="#1A5C3A"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="Fertilizantes"
+                  fill="#2D8653"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="Agroquímicos"
+                  fill="#F59E0B"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="Herramientas"
+                  fill="#3B82F6"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </motion.div>
+
+          {/* Donut Chart - Stock Distribution */}
+          <motion.div
+            variants={itemVariants}
+            className="bg-card rounded-xl p-5 border border-border shadow-card"
+          >
+            <h2 className="text-sm font-semibold text-foreground mb-4">
+              Distribución de Stock
+            </h2>
+            <ResponsiveContainer width="100%" height={180}>
+              <PieChart>
+                <Pie
+                  data={stockDistribution}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={75}
+                  dataKey="value"
+                  paddingAngle={3}
+                >
+                  {stockDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value) => `${value} unidades`}
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #E4E8E2',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="mt-4 space-y-2">
+              {stockDistribution.map((item) => (
+                <div
+                  key={item.name}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: item.fill }}
+                    />
+                    <span className="text-muted-foreground">{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-foreground">
+                      {item.value}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      ({item.percentage}%)
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Recent Movements Table */}
+        <motion.div
+          variants={itemVariants}
+          className="bg-card rounded-xl p-5 border border-border shadow-card"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-foreground">
+              Movimientos Recientes
+            </h2>
+            <a
+              href="/movimientos"
+              className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+            >
+              Ver todos
+            </a>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                    Tipo
+                  </th>
+                  <th className="text-left py-3 px-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                    Producto
+                  </th>
+                  <th className="text-left py-3 px-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                    Categoría
+                  </th>
+                  <th className="text-left py-3 px-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                    Cantidad
+                  </th>
+                  <th className="text-left py-3 px-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                    Usuario
+                  </th>
+                  <th className="text-left py-3 px-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                    Fecha
+                  </th>
+                  <th className="text-left py-3 px-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                    Estado
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {movements.slice(0, 8).map((movement) => (
+                  <tr
+                    key={movement.id}
+                    className="border-b border-border/50 hover:bg-green-50/30 transition-colors"
+                  >
+                    <td className="py-3 px-3">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          movement.type === 'ENTRADA'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}
+                      >
+                        {movement.type === 'ENTRADA' ? (
+                          <ArrowDownLeft className="w-3 h-3" />
+                        ) : (
+                          <ArrowUpRight className="w-3 h-3" />
+                        )}
+                        {movement.type}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 text-foreground font-medium">
+                      {movement.productName}
+                    </td>
+                    <td className="py-3 px-3">
+                      <span
+                        className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+                        style={{
+                          backgroundColor: `${getCategoryColor(movement.category)}15`,
+                          color: getCategoryColor(movement.category),
+                        }}
+                      >
+                        {movement.category}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 text-foreground">
+                      {movement.quantity} {movement.unit}
+                    </td>
+                    <td className="py-3 px-3 text-muted-foreground">
+                      {movement.responsible}
+                    </td>
+                    <td className="py-3 px-3 text-muted-foreground text-xs">
+                      {movement.date}
+                    </td>
+                    <td className="py-3 px-3">
+                      <span
+                        className={`text-xs font-medium px-2 py-1 rounded ${
+                          movement.status === 'Completado'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}
+                      >
+                        {movement.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

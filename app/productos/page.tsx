@@ -1,468 +1,450 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Eye, Edit2, Trash2, TrendingUp, AlertCircle, Package } from 'lucide-react';
-import { SearchInput, FilterButton, FilterGroup, FilterBar } from '@/components/filters';
-import { DataTable } from '@/components/data-table';
-import { DeleteConfirmModal, SuccessModal, DetailsModal } from '@/components/crud-modal';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Plus,
+  Eye,
+  Edit,
+  Package,
+  X,
+} from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import {
+  products,
+  formatCurrency,
+  getCategoryColor,
+  getStatusInfo,
+  type ProductCategory,
+} from '@/lib/data';
 
-const productosData = [
-  {
-    id: 1,
-    codigo_interno: 'CASTAÑA-001',
-    nombre_comercial: 'Nuez de Brasil Premium 1kg',
-    nombre_generico: 'Castanha do Brasil',
-    tipo_producto: 'Semillas',
-    categoria_cultivo: 'GENERAL',
-    registro_senasa: 'SENASA-2024-001',
-    notas_permanentes: 'Producto de máxima calidad, certificado orgánico',
-    marca: 'CASTAÑA PREMIUM',
-    unidad_medida: 'KG',
-    stock_actual: 450,
-    stock_minimo: 100,
-    stock_maximo: 1000,
-    precio_unitario_compra: 8.50,
-    precio_unitario_venta: 15.00,
-    margen_ganancia: 76,
-    activo: true,
-  },
-  {
-    id: 2,
-    codigo_interno: 'CASTAÑA-002',
-    nombre_comercial: 'Nuez de Brasil Barrica 250kg',
-    nombre_generico: 'Castanha do Brasil',
-    tipo_producto: 'Semillas',
-    categoria_cultivo: 'GENERAL',
-    registro_senasa: 'SENASA-2024-002',
-    notas_permanentes: 'Presentación bulk para distribuidores',
-    marca: 'CASTAÑA EXPORT',
-    unidad_medida: 'KG',
-    stock_actual: 85,
-    stock_minimo: 200,
-    stock_maximo: 500,
-    precio_unitario_compra: 6.75,
-    precio_unitario_venta: 12.50,
-    margen_ganancia: 85,
-    activo: true,
-  },
-  {
-    id: 3,
-    codigo_interno: 'FERT-001',
-    nombre_comercial: 'Fertilizante NPK 15-15-15',
-    nombre_generico: 'Fertilizante compuesto',
-    tipo_producto: 'Fertilizantes',
-    categoria_cultivo: 'GENERAL',
-    registro_senasa: 'SENASA-2024-003',
-    notas_permanentes: 'Balanceado con micronutrientes',
-    marca: 'AGROQUIM',
-    unidad_medida: 'KG',
-    stock_actual: 320,
-    stock_minimo: 100,
-    stock_maximo: 600,
-    precio_unitario_compra: 2.20,
-    precio_unitario_venta: 4.50,
-    margen_ganancia: 104,
-    activo: true,
-  },
-  {
-    id: 4,
-    codigo_interno: 'AGRO-001',
-    nombre_comercial: 'Insecticida Orgánico 5L',
-    nombre_generico: 'Piretrinas naturales',
-    tipo_producto: 'Agroquímicos',
-    categoria_cultivo: 'GENERAL',
-    registro_senasa: 'SENASA-2024-004',
-    notas_permanentes: 'Seguro para cultivos, aplicación cada 7 días',
-    marca: 'BIOPEST',
-    unidad_medida: 'LITRO',
-    stock_actual: 45,
-    stock_minimo: 50,
-    stock_maximo: 200,
-    precio_unitario_compra: 12.00,
-    precio_unitario_venta: 22.50,
-    margen_ganancia: 87,
-    activo: true,
-  },
-  {
-    id: 5,
-    codigo_interno: 'HERM-001',
-    nombre_comercial: 'Pala Agrícola Acero Reforzado',
-    nombre_generico: 'Herramienta agrícola',
-    tipo_producto: 'Herramientas',
-    categoria_cultivo: 'GENERAL',
-    registro_senasa: null,
-    notas_permanentes: 'Garantía 2 años contra defectos de fabricación',
-    marca: 'LABRADOOR',
-    unidad_medida: 'UNIDAD',
-    stock_actual: 12,
-    stock_minimo: 5,
-    stock_maximo: 30,
-    precio_unitario_compra: 8.75,
-    precio_unitario_venta: 18.00,
-    margen_ganancia: 105,
-    activo: true,
-  },
-  {
-    id: 6,
-    codigo_interno: 'SEMI-001',
-    nombre_comercial: 'Semilla Maíz Hybrid H-2024',
-    nombre_generico: 'Maíz híbrido',
-    tipo_producto: 'Semillas',
-    categoria_cultivo: 'MAIZ',
-    registro_senasa: 'SENASA-2024-006',
-    notas_permanentes: 'Alto rendimiento, resistente a sequía',
-    marca: 'SYNGENTA',
-    unidad_medida: 'KG',
-    stock_actual: 250,
-    stock_minimo: 100,
-    stock_maximo: 500,
-    precio_unitario_compra: 45.00,
-    precio_unitario_venta: 85.00,
-    margen_ganancia: 88,
-    activo: true,
-  },
-  {
-    id: 7,
-    codigo_interno: 'AGRO-002',
-    nombre_comercial: 'Fungicida Cobre 1kg',
-    nombre_generico: 'Fungicida cúprico',
-    tipo_producto: 'Agroquímicos',
-    categoria_cultivo: 'GENERAL',
-    registro_senasa: 'SENASA-2024-007',
-    notas_permanentes: 'Efectivo contra oídio y mildiú',
-    marca: 'CUPROGARD',
-    unidad_medida: 'KG',
-    stock_actual: 78,
-    stock_minimo: 30,
-    stock_maximo: 150,
-    precio_unitario_compra: 15.50,
-    precio_unitario_venta: 28.00,
-    margen_ganancia: 80,
-    activo: true,
-  },
-  {
-    id: 8,
-    codigo_interno: 'FERT-002',
-    nombre_comercial: 'Sulfato de Potasio 25kg',
-    nombre_generico: 'Nutriente potásico',
-    tipo_producto: 'Fertilizantes',
-    categoria_cultivo: 'PAPA',
-    registro_senasa: 'SENASA-2024-008',
-    notas_permanentes: 'Pureza 99%, aplicar en floración',
-    marca: 'AGROQUIM',
-    unidad_medida: 'KG',
-    stock_actual: 180,
-    stock_minimo: 75,
-    stock_maximo: 350,
-    precio_unitario_compra: 18.00,
-    precio_unitario_venta: 32.50,
-    margen_ganancia: 80,
-    activo: true,
-  },
-];
+const categories: ProductCategory[] = ['Semillas', 'Fertilizantes', 'Agroquímicos', 'Herramientas'];
+const units = ['kg', 'litros', 'unidades', 'sacos'];
 
-const tipoProductoColors: Record<string, { bg: string; text: string; border: string }> = {
-  'Semillas': { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-  'Fertilizantes': { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
-  'Agroquímicos': { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-  'Herramientas': { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' },
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
 };
 
-function getStockStatus(actual: number, minimo: number, maximo: number) {
-  if (actual <= minimo) return { label: 'Bajo stock', color: 'text-red-600', dot: 'bg-red-600' };
-  if (actual >= maximo * 0.8) return { label: 'Óptimo', color: 'text-emerald-600', dot: 'bg-emerald-600' };
-  return { label: 'Normal', color: 'text-slate-600', dot: 'bg-slate-400' };
-}
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
 
-export default function Productos() {
-  const [productos, setProductos] = useState(productosData);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [tipoFiltro, setTipoFiltro] = useState<string | null>(null);
-  const [categoriaFiltro, setCategoriaFiltro] = useState<string | null>(null);
-
-  // Modal States
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
-  const [successModalOpen, setSuccessModalOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState({ title: '', message: '' });
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [selectedProducto, setSelectedProducto] = useState<any>(null);
-
-
-
-  const productosFiltrados = productos.filter((p) => {
-    const matchesSearch = p.nombre_comercial.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.codigo_interno.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.marca.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTipo = !tipoFiltro || p.tipo_producto === tipoFiltro;
-    const matchesCategoria = !categoriaFiltro || p.categoria_cultivo === categoriaFiltro;
-    return matchesSearch && matchesTipo && matchesCategoria;
+export default function ProductosPage() {
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    code: '',
+    name: '',
+    brand: '',
+    category: 'Semillas' as ProductCategory,
+    unit: 'kg',
+    initialStock: '',
+    minStock: '',
+    unitPrice: '',
+    senasaRegistration: '',
+    hasSenasa: false,
+    notes: '',
   });
 
-  const activos = productos.filter(p => p.activo).length;
-  const stockTotal = productos.reduce((sum, p) => sum + p.stock_actual, 0);
-  const bajoStock = productos.filter(p => p.stock_actual <= p.stock_minimo).length;
-  const utilidadPotencial = productos.reduce((sum, p) => sum + ((p.precio_unitario_venta - p.precio_unitario_compra) * p.stock_actual), 0);
-
-  const tiposUnicos = [...new Set(productos.map(p => p.tipo_producto))];
-  const categoriasUnicas = [...new Set(productos.map(p => p.categoria_cultivo))];
-
-  const handleDeleteProducto = () => {
-    if (deleteTarget) {
-      setProductos(productos.filter(p => p.id !== deleteTarget.id));
-      setDeleteModalOpen(false);
-      setSuccessMessage({
-        title: 'Producto Eliminado',
-        message: `${deleteTarget.nombre_comercial} ha sido eliminado exitosamente`,
-      });
-      setSuccessModalOpen(true);
-      setDeleteTarget(null);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData(prev => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleViewDetails = (producto: any) => {
-    setSelectedProducto(producto);
-    setDetailsModalOpen(true);
+  const getCategoryPrefix = (category: ProductCategory) => {
+    const prefixes: Record<ProductCategory, string> = {
+      'Semillas': 'SEMI',
+      'Fertilizantes': 'FERT',
+      'Agroquímicos': 'AGRO',
+      'Herramientas': 'HERM',
+    };
+    return prefixes[category];
   };
 
-  const handleOpenDeleteModal = (producto: any) => {
-    setDeleteTarget(producto);
-    setDeleteModalOpen(true);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle form submission
+    setIsSheetOpen(false);
+    setFormData({
+      code: '',
+      name: '',
+      brand: '',
+      category: 'Semillas',
+      unit: 'kg',
+      initialStock: '',
+      minStock: '',
+      unitPrice: '',
+      senasaRegistration: '',
+      hasSenasa: false,
+      notes: '',
+    });
   };
-
-
-  
-  const renderActions = (producto: any) => (
-    <div className="flex items-center justify-center gap-2">
-      <button
-        title="Ver detalles"
-        onClick={() => handleViewDetails(producto)}
-        className="p-2 hover:bg-blue-100 rounded-lg transition-colors text-blue-600"
-      >
-        <Eye className="w-4 h-4" strokeWidth={2} />
-      </button>
-      <button title="Editar" className="p-2 hover:bg-amber-100 rounded-lg transition-colors text-amber-600">
-        <Edit2 className="w-4 h-4" strokeWidth={2} />
-      </button>
-      <button
-        title="Eliminar"
-        onClick={() => handleOpenDeleteModal(producto)}
-        className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600"
-      >
-        <Trash2 className="w-4 h-4" strokeWidth={2} />
-      </button>
-    </div>
-  );
-
-  const columns = [
-    { key: 'codigo_interno', label: 'Código', render: (val: any) => <span className="font-mono text-sm text-gray-600">{val}</span> },
-    {
-      key: 'nombre_comercial',
-      label: 'Producto',
-      render: (val: any, row: any) => (
-        <div>
-          <p className="font-medium text-gray-900 text-sm">{val}</p>
-          <p className="text-xs text-gray-500">{row.marca}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'tipo_producto',
-      label: 'Tipo',
-      render: (val: any) => {
-        const colors = tipoProductoColors[val] || tipoProductoColors['Herramientas'];
-        return <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium border ${colors.bg} ${colors.text} ${colors.border}`}>{val}</span>;
-      },
-    },
-    {
-      key: 'stock_actual',
-      label: 'Stock',
-      align: 'right' as const,
-      render: (val: any, row: any) => {
-        const status = getStockStatus(val, row.stock_minimo, row.stock_maximo);
-        return (
-          <div className="flex items-center justify-end gap-2">
-            <span className={`w-2 h-2 rounded-full ${status.dot}`}></span>
-            <span className="font-medium text-gray-900">{val}</span>
-          </div>
-        );
-      },
-    },
-    { key: 'precio_unitario_venta', label: 'Precio Venta', align: 'right' as const, render: (val: any) => <span className="font-mono font-medium text-emerald-600 text-sm">${val.toFixed(2)}</span> },
-    {
-      key: 'registro_senasa',
-      label: 'Registro SENASA',
-      render: (val: any) => (
-        <span className={`inline-block text-xs font-medium ${val ? 'text-emerald-600' : 'text-gray-400'}`}>
-          {val ? '✓' : '—'}
-        </span>
-      ),
-    },
-  ];
 
   return (
-    <div className="w-full min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-gray-200 bg-white sticky top-0 z-10">
-        <div className="px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-semibold text-gray-900">Productos</h1>
-              <p className="text-gray-600 text-sm mt-1">Gestiona tu catálogo de productos agrícolas</p>
-            </div>
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md">
-              <Plus className="w-5 h-5" strokeWidth={2} />
+      <header className="border-b border-border bg-card px-6 py-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Productos</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Catálogo de insumos y herramientas agrícolas
+            </p>
+          </div>
+          <button
+            onClick={() => setIsSheetOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo Producto
+          </button>
+        </div>
+      </header>
+
+      <div className="p-6">
+        {/* Product Grid */}
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {products.map((product) => {
+            const statusInfo = getStatusInfo(product.status);
+            const stockPercentage = Math.min((product.stock / (product.minStock * 3)) * 100, 100);
+
+            return (
+              <motion.div
+                key={product.id}
+                variants={cardVariants}
+                className="bg-card rounded-xl border border-border shadow-card overflow-hidden hover:shadow-soft transition-shadow"
+              >
+                {/* Category color stripe */}
+                <div
+                  className="h-1.5"
+                  style={{ backgroundColor: getCategoryColor(product.category) }}
+                />
+
+                <div className="p-5">
+                  {/* Category Badge */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span
+                      className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                      style={{
+                        backgroundColor: `${getCategoryColor(product.category)}15`,
+                        color: getCategoryColor(product.category),
+                      }}
+                    >
+                      {product.category}
+                    </span>
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {product.code}
+                    </span>
+                  </div>
+
+                  {/* Product Info */}
+                  <h3 className="font-semibold text-foreground text-base mb-1 line-clamp-2">
+                    {product.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">{product.brand}</p>
+
+                  {/* Stock Progress */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between text-sm mb-1.5">
+                      <span className="text-muted-foreground">Stock</span>
+                      <span className="font-semibold text-foreground">
+                        {product.stock} {product.unit}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{
+                          backgroundColor:
+                            product.status === 'Agotado'
+                              ? '#EF4444'
+                              : product.status === 'Bajo'
+                              ? '#F59E0B'
+                              : '#22C55E',
+                        }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${stockPercentage}%` }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Mínimo: {product.minStock} {product.unit}
+                    </p>
+                  </div>
+
+                  {/* Status and Price */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${statusInfo.bgColor} ${statusInfo.color} ${statusInfo.borderColor}`}
+                    >
+                      {product.status}
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {formatCurrency(product.unitPrice)}
+                      <span className="text-xs text-muted-foreground font-normal">/{product.unit}</span>
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-3 border-t border-border">
+                    <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors">
+                      <Eye className="w-4 h-4" />
+                      Ver
+                    </button>
+                    <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors">
+                      <Edit className="w-4 h-4" />
+                      Editar
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </div>
+
+      {/* New Product Sheet */}
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader className="border-b border-border pb-4">
+            <SheetTitle className="flex items-center gap-2 text-lg">
+              <Package className="w-5 h-5 text-primary" />
               Nuevo Producto
-            </button>
-          </div>
-        </div>
-      </div>
+            </SheetTitle>
+            <SheetDescription>
+              Agrega un nuevo producto al catálogo de inventario
+            </SheetDescription>
+          </SheetHeader>
 
-      {/* Main Content */}
-      <div className="px-8 py-6">
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* Productos Activos */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-start justify-between">
+          <form onSubmit={handleSubmit} className="p-4 space-y-5">
+            {/* Category & Auto Code */}
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Productos</p>
-                <p className="text-2xl font-bold text-gray-900 mt-2">{activos}</p>
-                <p className="text-gray-500 text-xs mt-1">activos</p>
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                  Categoría
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Package className="w-5 h-5 text-emerald-600" strokeWidth={1.5} />
-              </div>
-            </div>
-          </div>
-
-          {/* Stock Total */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-start justify-between">
               <div>
-                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Stock Total</p>
-                <p className="text-2xl font-bold text-gray-900 mt-2 font-mono">{stockTotal.toLocaleString()}</p>
-                <p className="text-gray-500 text-xs mt-1">unidades</p>
-              </div>
-              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Package className="w-5 h-5 text-blue-600" strokeWidth={1.5} />
-              </div>
-            </div>
-          </div>
-
-          {/* Bajo Stock Alert */}
-          <div className="bg-white border border-red-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Bajo Stock</p>
-                <p className="text-2xl font-bold text-red-600 mt-2">{bajoStock}</p>
-                <p className="text-gray-500 text-xs mt-1">por reponer</p>
-              </div>
-              <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-5 h-5 text-red-600" strokeWidth={1.5} />
-              </div>
-            </div>
-          </div>
-
-          {/* Utilidad Potencial */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Utilidad</p>
-                <p className="text-2xl font-bold text-gray-900 mt-2 font-mono">${Math.round(utilidadPotencial).toLocaleString()}</p>
-                <p className="text-gray-500 text-xs mt-1">potencial</p>
-              </div>
-              <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-5 h-5 text-amber-600" strokeWidth={1.5} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <FilterBar>
-          <SearchInput
-            placeholder="Buscar por código, nombre o marca..."
-            value={searchQuery}
-            onChange={setSearchQuery}
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FilterGroup label="Por tipo">
-              <>
-                {tiposUnicos.map((tipo) => (
-                  <FilterButton
-                    key={tipo}
-                    label={tipo}
-                    active={tipoFiltro === tipo}
-                    onClick={() => setTipoFiltro(tipoFiltro === tipo ? null : tipo)}
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                  Código
+                </label>
+                <div className="flex items-center gap-1 px-3 py-2 border border-border rounded-lg bg-muted/50 text-sm">
+                  <span className="font-mono text-muted-foreground">
+                    {getCategoryPrefix(formData.category)}-
+                  </span>
+                  <input
+                    type="text"
+                    name="code"
+                    value={formData.code}
+                    onChange={handleInputChange}
+                    placeholder="001"
+                    className="flex-1 bg-transparent focus:outline-none font-mono"
                   />
-                ))}
-              </>
-            </FilterGroup>
+                </div>
+              </div>
+            </div>
 
-            <FilterGroup label="Por categoría">
-              <>
-                {categoriasUnicas.map((cat) => (
-                  <FilterButton
-                    key={cat}
-                    label={cat}
-                    active={categoriaFiltro === cat}
-                    onClick={() => setCategoriaFiltro(categoriaFiltro === cat ? null : cat)}
+            {/* Product Name */}
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                Nombre del Producto
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Ej: Semilla Maíz Hybrid H-2024"
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                required
+              />
+            </div>
+
+            {/* Brand */}
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                Marca / Proveedor
+              </label>
+              <input
+                type="text"
+                name="brand"
+                value={formData.brand}
+                onChange={handleInputChange}
+                placeholder="Ej: Syngenta"
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+            </div>
+
+            {/* Unit & Price */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                  Unidad de Medida
+                </label>
+                <select
+                  name="unit"
+                  value={formData.unit}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  {units.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                  Precio Unitario (S/.)
+                </label>
+                <input
+                  type="number"
+                  name="unitPrice"
+                  value={formData.unitPrice}
+                  onChange={handleInputChange}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Stock */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                  Stock Inicial
+                </label>
+                <input
+                  type="number"
+                  name="initialStock"
+                  value={formData.initialStock}
+                  onChange={handleInputChange}
+                  placeholder="0"
+                  min="0"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                  Stock Mínimo (Alerta)
+                </label>
+                <input
+                  type="number"
+                  name="minStock"
+                  value={formData.minStock}
+                  onChange={handleInputChange}
+                  placeholder="0"
+                  min="0"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* SENASA Registration */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="hasSenasa"
+                  id="hasSenasa"
+                  checked={formData.hasSenasa}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20"
+                />
+                <label htmlFor="hasSenasa" className="text-sm text-foreground">
+                  Tiene registro SENASA
+                </label>
+              </div>
+              {formData.hasSenasa && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  <input
+                    type="text"
+                    name="senasaRegistration"
+                    value={formData.senasaRegistration}
+                    onChange={handleInputChange}
+                    placeholder="Ej: SENASA-2024-001"
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
-                ))}
-              </>
-            </FilterGroup>
-          </div>
-        </FilterBar>
+                </motion.div>
+              )}
+            </div>
 
-        {/* Table */}
-        <DataTable
-          columns={columns}
-          data={productosFiltrados}
-          actions={renderActions}
-          emptyMessage="No hay productos que coincidan con los criterios de búsqueda"
-        />
+            {/* Notes */}
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                Notas
+              </label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleInputChange}
+                placeholder="Observaciones adicionales..."
+                rows={3}
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+              />
+            </div>
 
-        {/* Footer Stats */}
-        <div className="mt-4 text-xs text-gray-500">
-          Mostrando <span className="font-semibold text-gray-700">{productosFiltrados.length}</span> de <span className="font-semibold text-gray-700">{productos.length}</span> productos
-        </div>
-      </div>
-
-      {/* Modals */}
-      <DeleteConfirmModal
-        open={deleteModalOpen}
-        onOpenChange={setDeleteModalOpen}
-        onConfirm={handleDeleteProducto}
-        itemName={deleteTarget?.nombre_comercial || ''}
-        itemType="Producto"
-      />
-
-      <SuccessModal
-        open={successModalOpen}
-        onOpenChange={setSuccessModalOpen}
-        title={successMessage.title}
-        message={successMessage.message}
-      />
-
-      <DetailsModal
-        open={detailsModalOpen}
-        onOpenChange={setDetailsModalOpen}
-        title="Detalles del Producto"
-        data={selectedProducto}
-        fields={[
-          { label: 'Código', key: 'codigo_interno' },
-          { label: 'Nombre Comercial', key: 'nombre_comercial' },
-          { label: 'Marca', key: 'marca' },
-          { label: 'Tipo', key: 'tipo_producto' },
-          { label: 'Stock Actual', key: 'stock_actual' },
-          { label: 'Stock Mínimo', key: 'stock_minimo' },
-          { label: 'Stock Máximo', key: 'stock_maximo' },
-          { label: 'Precio Venta', key: 'precio_unitario_venta' },
-          { label: 'Registro SENASA', key: 'registro_senasa' },
-        ]}
-      />
+            {/* Form Actions */}
+            <div className="flex gap-3 pt-4 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setIsSheetOpen(false)}
+                className="flex-1 px-4 py-2.5 border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Guardar Producto
+              </button>
+            </div>
+          </form>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
