@@ -2,7 +2,8 @@ import React from "react"
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import { Sidebar } from '@/components/sidebar'
+import { Toaster } from 'sonner'
+import { AppShell } from '@/components/app-shell'
 import './globals.css'
 
 const inter = Inter({ 
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#1A5C3A',
+  themeColor: '#052E16',
 }
 
 export default function RootLayout({
@@ -29,10 +30,19 @@ export default function RootLayout({
   return (
     <html lang="es" className="bg-background">
       <body className={`${inter.className} antialiased bg-background`}>
-        <Sidebar />
-        <main className="ml-60">
+        <AppShell>
           {children}
-        </main>
+        </AppShell>
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: 'white',
+              border: '1px solid var(--border)',
+              borderRadius: '12px',
+            },
+          }}
+        />
         <Analytics />
       </body>
     </html>
